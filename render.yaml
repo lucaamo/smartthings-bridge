@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: smartthings-bridge
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    autoDeploy: false
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 8080
+      - key: PUBLIC_BASE_URL
+        sync: false
+      - key: SMARTTHINGS_CLIENT_ID
+        sync: false
+      - key: SMARTTHINGS_CLIENT_SECRET
+        sync: false
+      - key: HOMEY_SHARED_SECRET
+        sync: false
