@@ -420,7 +420,10 @@ app.post('/smartthings/devices/:deviceId/commands', async (req, res) => {
 
 app.post('/smartapp/webhook', async (req, res) => {
   try {
-    const lifecycle = req.body?.lifecycle || req.body?.headers?.interactionType || 'unknown';
+    const lifecycle = req.body?.lifecycle
+      || req.body?.messageType
+      || req.body?.headers?.interactionType
+      || 'unknown';
     console.log('[smartapp/webhook] lifecycle=%s body=%j', lifecycle, req.body);
 
     if (lifecycle === 'PING') {
