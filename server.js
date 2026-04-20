@@ -421,6 +421,7 @@ app.post('/smartthings/devices/:deviceId/commands', async (req, res) => {
 app.post('/smartapp/webhook', async (req, res) => {
   try {
     const lifecycle = req.body?.lifecycle || req.body?.headers?.interactionType || 'unknown';
+    console.log('[smartapp/webhook] lifecycle=%s body=%j', lifecycle, req.body);
 
     if (lifecycle === 'PING') {
       const challenge = req.body?.pingData?.challenge;
@@ -445,6 +446,8 @@ app.post('/smartapp/webhook', async (req, res) => {
         throw err;
       }
 
+      console.log('[smartapp/webhook] confirmationUrl=%s', confirmationUrl);
+
       const confirmResponse = await fetch(confirmationUrl, {
         method: 'GET',
         headers: {
@@ -453,6 +456,11 @@ app.post('/smartapp/webhook', async (req, res) => {
       });
 
       const confirmText = await confirmResponse.text();
+      console.log(
+        '[smartapp/webhook] confirmation GET status=%s body=%s',
+        confirmResponse.status,
+        confirmText,
+      );
       if (!confirmResponse.ok) {
         const err = new Error(`Confirmation GET failed with ${confirmResponse.status}`);
         err.status = confirmResponse.status;
@@ -470,6 +478,7 @@ app.post('/smartapp/webhook', async (req, res) => {
       lifecycle,
     });
   } catch (err) {
+    console.error('[smartapp/webhook] error', err);
     sendError(res, err);
   }
 });
