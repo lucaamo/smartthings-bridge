@@ -418,13 +418,60 @@ app.post('/smartthings/devices/:deviceId/commands', async (req, res) => {
   }
 });
 
-app.post('/smartapp/webhook', (req, res) => {
-  const lifecycle = req.body?.lifecycle || req.body?.headers?.interactionType || 'unknown';
-  res.status(501).json({
-    ok: false,
-    message: 'SmartThings webhook lifecycle handling not implemented yet.',
-    lifecycle,
-  });
+app.post('/smartapp/webhook', async (req, res) => {
+  try {
+    const lifecycle = req.body?.lifecycle || req.body?.headers?.interactionType || 'unknown';
+
+    if (lifecycle === 'PING') {
+      const challenge = req.body?.pingData?.challenge;
+      if (!challenge) {
+        const err = new Error('Missing ping challenge');
+        err.status = 400;
+        throw err;
+      }
+
+      return res.json({
+        pingData: {
+          challenge,
+        },
+      });
+    }
+
+    if (lifecycle === 'CONFIRMATION') {
+      const confirmationUrl = req.body?.confirmationData?.confirmationUrl;
+      if (!confirmationUrl) {
+        const err = new Error('Missing confirmationUrl');
+        err.status = 400;
+        throw err;
+      }
+
+      const confirmResponse = await fetch(confirmationUrl, {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+        },
+      });
+
+      const confirmText = await confirmResponse.text();
+      if (!confirmResponse.ok) {
+        const err = new Error(`Confirmation GET failed with ${confirmResponse.status}`);
+        err.status = confirmResponse.status;
+        err.details = confirmText;
+        throw err;
+      }
+
+      return res.json({
+        targetUrl: webhookUrl,
+      });
+    }
+
+    return res.json({
+      ok: true,
+      lifecycle,
+    });
+  } catch (err) {
+    sendError(res, err);
+  }
 });
 
 app.get('/homey/devices', async (req, res) => {
